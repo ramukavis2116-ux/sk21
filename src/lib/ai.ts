@@ -1,11 +1,24 @@
-import { GoogleGenerativeAI } from "@google/generative-ai";
+import { supabase } from "@/integrations/supabase/client";
 
-const genAI = new GoogleGenerativeAI("AIzaSyAF9evntpwssCyme4GA_JvUe84DlB51HAQ");
+async function callAI(messages: { role: string; content: string }[]): Promise<string> {
+  const { data, error } = await supabase.functions.invoke('study-ai', {
+    body: { messages },
+  });
 
-const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
+  if (error) throw new Error(error.message || 'AI request failed');
+  if (data?.error) throw new Error(data.error);
+  return data.content;
+}
 
 export async function generateNotes(subject: string, topic: string, level: string): Promise<string> {
-  const prompt = `You are an expert study assistant. Generate detailed, well-structured study notes for a ${level} student.
+  return callAI([
+    {
+      role: "system",
+      content: "You are an expert study assistant. Generate detailed, well-structured study notes. Format in clean markdown with proper headings, bullet points, and bold text."
+    },
+    {
+      role: "user",
+      content: `Generate detailed study notes for a ${level} student.
 
 Subject: ${subject}
 Topic: ${topic}
@@ -14,29 +27,27 @@ Please provide:
 1. **Key Headings** - Important headings related to this topic
 2. **Simple Notes** - Clear, easy-to-understand notes under each heading
 3. **Key Points to Remember** - Bullet points of the most important concepts
-4. **Quick Summary** - A brief summary at the end
-
-Format the response in clean markdown with proper headings, bullet points, and bold text for emphasis.`;
-
-  const result = await model.generateContent(prompt);
-  return result.response.text();
+4. **Quick Summary** - A brief summary at the end`
+    }
+  ]);
 }
 
 export async function solveDoubt(question: string, context?: string): Promise<string> {
-  const prompt = `You are a friendly and knowledgeable study assistant. A student has a doubt:
-
-Question: ${question}
-${context ? `Context/Subject: ${context}` : ''}
+  return callAI([
+    {
+      role: "system",
+      content: "You are a friendly and knowledgeable study assistant. Provide clear explanations with examples. Use simple language and markdown formatting."
+    },
+    {
+      role: "user",
+      content: `Question: ${question}${context ? `\nContext/Subject: ${context}` : ''}
 
 Please provide:
 1. A clear, step-by-step explanation
 2. Examples if applicable
-3. Tips to remember the concept
-
-Use simple language and markdown formatting.`;
-
-  const result = await model.generateContent(prompt);
-  return result.response.text();
+3. Tips to remember the concept`
+    }
+  ]);
 }
 
 export async function generateRevisionPlan(
@@ -45,8 +56,15 @@ export async function generateRevisionPlan(
   studyLevel: string
 ): Promise<string> {
   const daysLeft = Math.ceil((new Date(examDate).getTime() - Date.now()) / (1000 * 60 * 60 * 24));
-  
-  const prompt = `You are an expert study planner. Create a personalized revision plan.
+
+  return callAI([
+    {
+      role: "system",
+      content: "You are an expert study planner. Create personalized revision plans with tables where helpful. Format in clean markdown."
+    },
+    {
+      role: "user",
+      content: `Create a personalized revision plan.
 
 Student Level: ${studyLevel}
 Subjects: ${subjects.join(', ')}
@@ -58,12 +76,9 @@ Please provide:
 2. **Daily Schedule** - A day-by-day revision plan
 3. **Priority Topics** - Most important topics to focus on first
 4. **Study Tips** - Time management and revision strategies
-5. **Break Schedule** - When to take breaks for optimal retention
-
-Format in clean markdown with tables where helpful.`;
-
-  const result = await model.generateContent(prompt);
-  return result.response.text();
+5. **Break Schedule** - When to take breaks for optimal retention`
+    }
+  ]);
 }
 
 export function getSubjectsForLevel(level: string, degree?: string, branch?: string): string[] {
