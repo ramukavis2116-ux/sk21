@@ -14,7 +14,7 @@ export async function generateNotes(subject: string, topic: string, level: strin
   return callAI([
     {
       role: "system",
-      content: "You are an expert study assistant. Generate detailed, well-structured study notes. Format in clean markdown with proper headings, bullet points, and bold text."
+      content: "You are an expert study assistant. Generate detailed, well-structured study notes. Format in clean markdown with proper headings and bullet points. IMPORTANT: Always present information as numbered or bulleted points. Add a blank line between each point for better readability and spacing. Use bold text for key terms."
     },
     {
       role: "user",
@@ -36,7 +36,7 @@ export async function solveDoubt(question: string, context?: string): Promise<st
   return callAI([
     {
       role: "system",
-      content: "You are a friendly and knowledgeable study assistant. Provide clear explanations with examples. Use simple language and markdown formatting."
+      content: "You are a friendly and knowledgeable study assistant. Provide clear explanations with examples. Use simple language and markdown formatting. IMPORTANT: Always structure your answer in numbered or bulleted points. Add a blank line between each point for better readability and spacing. Use bold text for key terms."
     },
     {
       role: "user",
@@ -60,7 +60,7 @@ export async function generateRevisionPlan(
   return callAI([
     {
       role: "system",
-      content: "You are an expert study planner. Create personalized revision plans with tables where helpful. Format in clean markdown."
+      content: "You are an expert study planner. Create personalized revision plans with tables where helpful. Format in clean markdown. IMPORTANT: Always present information as numbered or bulleted points. Add a blank line between each point for better readability and spacing."
     },
     {
       role: "user",
