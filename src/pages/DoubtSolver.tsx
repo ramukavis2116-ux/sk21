@@ -71,7 +71,7 @@ const DoubtSolver = () => {
               )}
               <Card className={`p-4 max-w-[80%] ${msg.role === 'user' ? 'gradient-primary text-primary-foreground' : 'shadow-soft'}`}>
                 {msg.role === 'assistant' ? (
-                  <div className="prose prose-sm max-w-none">
+                  <div className="prose prose-sm max-w-none [&>*]:mb-4 [&_li]:mb-2 [&_ol]:space-y-3 [&_ul]:space-y-3">
                     <ReactMarkdown>{msg.content}</ReactMarkdown>
                   </div>
                 ) : (
