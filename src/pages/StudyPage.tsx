@@ -78,7 +78,7 @@ const StudyPage = () => {
 
           {notes && !loading && (
             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
-              <Card className="p-6 shadow-card prose prose-sm max-w-none">
+              <Card className="p-6 shadow-card prose prose-sm max-w-none [&>*]:mb-4 [&_li]:mb-2 [&_ol]:space-y-3 [&_ul]:space-y-3">
                 <ReactMarkdown>{notes}</ReactMarkdown>
               </Card>
             </motion.div>
