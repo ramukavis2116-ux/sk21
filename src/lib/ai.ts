@@ -36,7 +36,7 @@ export async function solveDoubt(question: string, context?: string): Promise<st
   return callAI([
     {
       role: "system",
-      content: "You are a friendly and knowledgeable study assistant. Provide clear explanations with examples. Use simple language and markdown formatting."
+      content: "You are a friendly and knowledgeable study assistant. Provide clear explanations with examples. Use simple language and markdown formatting. IMPORTANT: Always structure your answer in numbered or bulleted points. Add a blank line between each point for better readability and spacing. Use bold text for key terms."
     },
     {
       role: "user",
