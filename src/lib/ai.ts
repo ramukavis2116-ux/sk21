@@ -60,7 +60,7 @@ export async function generateRevisionPlan(
   return callAI([
     {
       role: "system",
-      content: "You are an expert study planner. Create personalized revision plans with tables where helpful. Format in clean markdown."
+      content: "You are an expert study planner. Create personalized revision plans with tables where helpful. Format in clean markdown. IMPORTANT: Always present information as numbered or bulleted points. Add a blank line between each point for better readability and spacing."
     },
     {
       role: "user",
