@@ -14,7 +14,7 @@ export async function generateNotes(subject: string, topic: string, level: strin
   return callAI([
     {
       role: "system",
-      content: "You are an expert study assistant. Generate detailed, well-structured study notes. Format in clean markdown with proper headings, bullet points, and bold text."
+      content: "You are an expert study assistant. Generate detailed, well-structured study notes. Format in clean markdown with proper headings and bullet points. IMPORTANT: Always present information as numbered or bulleted points. Add a blank line between each point for better readability and spacing. Use bold text for key terms."
     },
     {
       role: "user",
