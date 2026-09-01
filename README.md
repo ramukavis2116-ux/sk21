@@ -1,73 +1,26 @@
-# Welcome to your Lovable project
+# Study Buddy AI
 
-## Project info
+This project is an AI-powered study assistant application designed for students of all levels, including school students, college students, and competitive exam aspirants. The application includes a user authentication system where students can create an account through a signup page by entering their name, email ID, and password, and log in using their email ID and password. After successful login, the user will be directed to the dashboard. The dashboard will display the student’s study progress, selected subjects, and an exam countdown. The system works using an API key and AI integration to provide personalized study support. Students will first enter their standard or level of study as input. Based on the selected standard, the application will display the appropriate syllabus and subjects related to it. The student can then enter a specific topic from the selected subject, and the application will generate important headings and simple notes related to that topic. For college students, the system will allow them to choose their degree first, followed by their branch. Based on this information, the application will display the relevant subjects and generate important headings and simple notes for the selected topic. The application will also include an AI doubt-solving feature where students can ask questions and receive explanations from AI. Additionally, students can enter their exam date, and the AI will analyze the remaining time until the exam. Based on the available time, the AI will suggest how many important topics the student can study and generate a personalized revision plan. The dashboard will also track the student’s daily study activity to monitor progress. To reduce distractions, tab switching will be restricted while using the application, but for emergency purposes access to essential applications such as WhatsApp and the Phone app will be allowed. create your own API key = "AIzaSyAF9evntpwssCyme4GA_JvUe84DlB51HAQ"
 
-**URL**: https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID
+This project was built with [Lovable](https://lovable.dev).
 
-## How can I edit this code?
+**Live app**: https://sk21.lovable.app
 
-There are several ways of editing your application.
+## Build with Lovable
 
-**Use Lovable**
+Continue developing this project in the [Lovable editor](https://lovable.dev/projects/8d5be391-c81e-4cbf-8005-e8b3dd4539c3).
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID) and start prompting.
+- **Ship faster**: describe what you want to build and Lovable handles the code.
+- **Stay in sync**: every change made in Lovable is committed straight to this repository.
+- **Full ownership**: this code is yours. Push to `main` on GitHub and your changes sync back into Lovable, ready for your next prompt.
 
-Changes made via Lovable will be committed automatically to this repo.
+## Development
 
-**Use your preferred IDE**
-
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
-
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
-
-Follow these steps:
+Prefer working locally? You need Node.js and npm — [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating).
 
 ```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
-
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
-
-# Step 3: Install the necessary dependencies.
+git clone <this-repository-url>
+cd <repository-name>
 npm i
-
-# Step 4: Start the development server with auto-reloading and an instant preview.
 npm run dev
 ```
-
-**Edit a file directly in GitHub**
-
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
-
-**Use GitHub Codespaces**
-
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
-
-## What technologies are used for this project?
-
-This project is built with:
-
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
-
-## How can I deploy this project?
-
-Simply open [Lovable](https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID) and click on Share -> Publish.
-
-## Can I connect a custom domain to my Lovable project?
-
-Yes, you can!
-
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
-
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/features/custom-domain#custom-domain)
