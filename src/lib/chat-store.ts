@@ -56,6 +56,15 @@ export function upsertChat(chat: Chat): Chat[] {
   return next;
 }
 
+export function renameChat(chatId: string, title: string): Chat[] {
+  const chats = loadChats();
+  const chat = chats.find(c => c.chatId === chatId);
+  if (!chat) return chats;
+  const next = chats.map(c => (c.chatId === chatId ? { ...c, title: title.trim() || c.title } : c));
+  saveChats(next);
+  return next;
+}
+
 export function deleteChat(chatId: string): Chat[] {
   const next = loadChats().filter(c => c.chatId !== chatId);
   saveChats(next);
