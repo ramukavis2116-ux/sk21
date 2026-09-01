@@ -13,14 +13,93 @@ import {
   titleFrom,
   upsertChat,
 } from '@/lib/chat-store';
-import { ArrowLeft, MessageCircle, Send, Loader2, Bot, User, Plus, Trash2, MessageSquare } from 'lucide-react';
+import {
+  ArrowLeft,
+  MessageCircle,
+  Send,
+  Loader2,
+  Bot,
+  User,
+  Plus,
+  Trash2,
+  MessageSquare,
+  Menu,
+  X,
+} from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card } from '@/components/ui/card';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
+import { cn } from '@/lib/utils';
 
 const formatTime = (ts: number) =>
   new Date(ts).toLocaleString(undefined, { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+
+interface ChatListProps {
+  chats: Chat[];
+  activeChatId?: string;
+  onSelect: (chatId: string) => void;
+  onDelete: (chatId: string) => void;
+  onNewChat: () => void;
+}
+
+const ChatList = ({ chats, activeChatId, onSelect, onDelete, onNewChat }: ChatListProps) => (
+  <div className="flex flex-col h-full">
+    <Button onClick={onNewChat} className="gradient-primary text-primary-foreground mb-3 w-full shrink-0">
+      <Plus className="w-4 h-4 mr-2" /> New chat
+    </Button>
+    <ScrollArea className="flex-1 -mr-2 pr-2">
+      <div className="space-y-1">
+        {chats.length === 0 && (
+          <p className="text-xs text-muted-foreground px-2 py-4">No previous chats yet.</p>
+        )}
+        {chats.map(chat => {
+          const isActive = chat.chatId === activeChatId;
+          return (
+            <div
+              key={chat.chatId}
+              className={cn(
+                'group relative flex items-start gap-2 rounded-lg px-3 py-2.5 text-left transition-colors',
+                isActive
+                  ? 'bg-primary/10 hover:bg-primary/15'
+                  : 'hover:bg-muted/70'
+              )}
+            >
+              {isActive && (
+                <div className="absolute left-0 top-1/2 -translate-y-1/2 h-6 w-1 rounded-r-full bg-primary" />
+              )}
+              <button
+                type="button"
+                onClick={() => onSelect(chat.chatId)}
+                className="flex-1 min-w-0 text-left"
+              >
+                <span className="flex items-center gap-2 text-sm font-medium truncate">
+                  <MessageSquare className={cn('w-3.5 h-3.5 shrink-0', isActive ? 'text-primary' : 'text-muted-foreground')} />
+                  <span className="truncate">{chat.title || 'New chat'}</span>
+                </span>
+                <span className={cn('block text-[11px] mt-0.5', isActive ? 'text-primary/80' : 'text-muted-foreground')}>
+                  {formatTime(chat.timestamp)}
+                </span>
+              </button>
+              <button
+                type="button"
+                aria-label="Delete chat"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onDelete(chat.chatId);
+                }}
+                className="opacity-0 group-hover:opacity-100 transition-opacity text-muted-foreground hover:text-destructive p-1 shrink-0"
+              >
+                <Trash2 className="w-3.5 h-3.5" />
+              </button>
+            </div>
+          );
+        })}
+      </div>
+    </ScrollArea>
+  </div>
+);
 
 const DoubtSolver = () => {
   const navigate = useNavigate();
@@ -29,6 +108,7 @@ const DoubtSolver = () => {
   const [question, setQuestion] = useState('');
   const [messages, setMessages] = useState<ChatMessage[]>(() => (chatId ? getChat(chatId)?.messages ?? [] : []));
   const [loading, setLoading] = useState(false);
+  const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
   const endRef = useRef<HTMLDivElement>(null);
 
@@ -91,7 +171,27 @@ const DoubtSolver = () => {
     if (id === chatId) navigate('/doubts', { replace: true });
   };
 
+  const selectChat = (id: string) => {
+    navigate(`/doubts/${id}`);
+    setMobileSidebarOpen(false);
+  };
+
+  const newChat = () => {
+    navigate('/doubts');
+    setMobileSidebarOpen(false);
+  };
+
   const sortedChats = useMemo(() => [...chats].sort((a, b) => b.timestamp - a.timestamp), [chats]);
+
+  const chatList = (
+    <ChatList
+      chats={sortedChats}
+      activeChatId={chatId}
+      onSelect={selectChat}
+      onDelete={handleDelete}
+      onNewChat={newChat}
+    />
+  );
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
@@ -100,6 +200,25 @@ const DoubtSolver = () => {
           <Button variant="ghost" size="icon" onClick={() => navigate('/dashboard')}>
             <ArrowLeft className="w-5 h-5" />
           </Button>
+
+          {/* Mobile sidebar toggle */}
+          <Sheet open={mobileSidebarOpen} onOpenChange={setMobileSidebarOpen}>
+            <SheetTrigger asChild>
+              <Button variant="ghost" size="icon" className="md:hidden">
+                <Menu className="w-5 h-5" />
+              </Button>
+            </SheetTrigger>
+            <SheetContent side="left" className="w-72 p-4 flex flex-col">
+              <SheetHeader className="pb-2">
+                <SheetTitle className="flex items-center gap-2 text-base">
+                  <MessageCircle className="w-5 h-5 text-primary" />
+                  Chat history
+                </SheetTitle>
+              </SheetHeader>
+              {chatList}
+            </SheetContent>
+          </Sheet>
+
           <div className="w-8 h-8 rounded-lg gradient-accent flex items-center justify-center">
             <MessageCircle className="w-4 h-4 text-accent-foreground" />
           </div>
@@ -108,51 +227,13 @@ const DoubtSolver = () => {
       </header>
 
       <div className="flex-1 container mx-auto px-4 py-6 flex gap-6">
-        {/* Chat history */}
-        <aside className="hidden md:flex w-64 flex-col shrink-0">
-          <Button
-            onClick={() => navigate('/doubts')}
-            className="gradient-primary text-primary-foreground mb-3 w-full"
-          >
-            <Plus className="w-4 h-4 mr-2" /> New chat
-          </Button>
-          <ScrollArea className="flex-1 max-h-[70vh] pr-2">
-            <div className="space-y-1">
-              {sortedChats.length === 0 && (
-                <p className="text-xs text-muted-foreground px-2 py-4">No previous chats yet.</p>
-              )}
-              {sortedChats.map(chat => (
-                <div
-                  key={chat.chatId}
-                  className={`group flex items-start gap-2 rounded-lg px-2 py-2 text-left transition-colors ${
-                    chat.chatId === chatId ? 'bg-muted' : 'hover:bg-muted/60'
-                  }`}
-                >
-                  <button
-                    type="button"
-                    onClick={() => navigate(`/doubts/${chat.chatId}`)}
-                    className="flex-1 min-w-0 text-left"
-                  >
-                    <span className="flex items-center gap-2 text-sm font-medium truncate">
-                      <MessageSquare className="w-3.5 h-3.5 shrink-0 text-muted-foreground" />
-                      <span className="truncate">{chat.title || 'New chat'}</span>
-                    </span>
-                    <span className="block text-[11px] text-muted-foreground mt-0.5">
-                      {formatTime(chat.timestamp)}
-                    </span>
-                  </button>
-                  <button
-                    type="button"
-                    aria-label="Delete chat"
-                    onClick={() => handleDelete(chat.chatId)}
-                    className="opacity-0 group-hover:opacity-100 transition-opacity text-muted-foreground hover:text-destructive p-1"
-                  >
-                    <Trash2 className="w-3.5 h-3.5" />
-                  </button>
-                </div>
-              ))}
-            </div>
-          </ScrollArea>
+        {/* Desktop chat history sidebar */}
+        <aside className="hidden md:flex w-72 flex-col shrink-0">
+          <div className="flex items-center gap-2 px-2 pb-3 mb-2 border-b border-border">
+            <MessageCircle className="w-5 h-5 text-primary" />
+            <h2 className="font-semibold text-sm">Chat history</h2>
+          </div>
+          {chatList}
         </aside>
 
         <main className="flex-1 max-w-3xl flex flex-col">
