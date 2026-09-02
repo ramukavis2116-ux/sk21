@@ -36,13 +36,23 @@ const StudyPage = () => {
         content: `Generate study notes for ${trimmedTopic} in ${decodedSubject}`,
       };
       const assistantMessage: ChatMessage = { role: 'assistant', content: result };
-      const chat: Chat = {
-        chatId: newChatId(),
-        title: trimmedTopic,
-        messages: [userMessage, assistantMessage],
-        timestamp: Date.now(),
-      };
+
+      // Re-searching the same topic reuses the existing chat instead of duplicating it
+      const existing = findChatByTitle(trimmedTopic);
+      const chat: Chat = existing
+        ? {
+            ...existing,
+            messages: [...existing.messages, userMessage, assistantMessage],
+            timestamp: Date.now(),
+          }
+        : {
+            chatId: newChatId(),
+            title: trimmedTopic,
+            messages: [userMessage, assistantMessage],
+            timestamp: Date.now(),
+          };
       upsertChat(chat);
+      if (existing) navigate(`/doubts/${existing.chatId}`);
     } catch (err) {
       setNotes('⚠️ Failed to generate notes. Please try again.');
     }
