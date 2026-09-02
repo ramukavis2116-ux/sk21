@@ -4,7 +4,7 @@ import { motion } from 'framer-motion';
 import ReactMarkdown from 'react-markdown';
 import { useAuth } from '@/lib/auth-context';
 import { generateNotes } from '@/lib/ai';
-import { Chat, ChatMessage, newChatId, upsertChat } from '@/lib/chat-store';
+import { Chat, ChatMessage, findChatByTitle, newChatId, upsertChat } from '@/lib/chat-store';
 import { BookOpen, ArrowLeft, Loader2, Sparkles } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -36,13 +36,23 @@ const StudyPage = () => {
         content: `Generate study notes for ${trimmedTopic} in ${decodedSubject}`,
       };
       const assistantMessage: ChatMessage = { role: 'assistant', content: result };
-      const chat: Chat = {
-        chatId: newChatId(),
-        title: trimmedTopic,
-        messages: [userMessage, assistantMessage],
-        timestamp: Date.now(),
-      };
+
+      // Re-searching the same topic reuses the existing chat instead of duplicating it
+      const existing = findChatByTitle(trimmedTopic);
+      const chat: Chat = existing
+        ? {
+            ...existing,
+            messages: [...existing.messages, userMessage, assistantMessage],
+            timestamp: Date.now(),
+          }
+        : {
+            chatId: newChatId(),
+            title: trimmedTopic,
+            messages: [userMessage, assistantMessage],
+            timestamp: Date.now(),
+          };
       upsertChat(chat);
+      if (existing) navigate(`/doubts/${existing.chatId}`);
     } catch (err) {
       setNotes('⚠️ Failed to generate notes. Please try again.');
     }

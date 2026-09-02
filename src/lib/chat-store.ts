@@ -38,6 +38,12 @@ export function getChat(chatId: string): Chat | undefined {
   return loadChats().find(c => c.chatId === chatId);
 }
 
+export function findChatByTitle(title: string): Chat | undefined {
+  const normalize = (s: string) => s.trim().replace(/\s+/g, ' ').toLowerCase();
+  const target = normalize(title);
+  return loadChats().find(c => normalize(c.title) === target);
+}
+
 export function newChatId(): string {
   return (isBrowser() && window.crypto?.randomUUID)
     ? window.crypto.randomUUID()
