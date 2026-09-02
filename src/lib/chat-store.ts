@@ -46,7 +46,7 @@ export function newChatId(): string {
 
 export function titleFrom(message: string): string {
   const clean = message.trim().replace(/\s+/g, ' ');
-  return clean.length > 48 ? `${clean.slice(0, 48)}…` : clean || 'New chat';
+  return clean || 'New chat';
 }
 
 export function upsertChat(chat: Chat): Chat[] {

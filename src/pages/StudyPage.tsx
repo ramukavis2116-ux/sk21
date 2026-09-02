@@ -4,6 +4,7 @@ import { motion } from 'framer-motion';
 import ReactMarkdown from 'react-markdown';
 import { useAuth } from '@/lib/auth-context';
 import { generateNotes } from '@/lib/ai';
+import { Chat, ChatMessage, newChatId, upsertChat } from '@/lib/chat-store';
 import { BookOpen, ArrowLeft, Loader2, Sparkles } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -27,6 +28,21 @@ const StudyPage = () => {
       const result = await generateNotes(decodedSubject, topic, user?.level || 'student');
       setNotes(result);
       if (user) updateUser({ topicsCompleted: (user.topicsCompleted || 0) + 1 });
+
+      // Save this topic as a new chat entry in the doubt solver history
+      const trimmedTopic = topic.trim();
+      const userMessage: ChatMessage = {
+        role: 'user',
+        content: `Generate study notes for ${trimmedTopic} in ${decodedSubject}`,
+      };
+      const assistantMessage: ChatMessage = { role: 'assistant', content: result };
+      const chat: Chat = {
+        chatId: newChatId(),
+        title: trimmedTopic,
+        messages: [userMessage, assistantMessage],
+        timestamp: Date.now(),
+      };
+      upsertChat(chat);
     } catch (err) {
       setNotes('⚠️ Failed to generate notes. Please try again.');
     }
