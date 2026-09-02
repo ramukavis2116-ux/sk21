@@ -10,6 +10,7 @@ import {
   getChat,
   loadChats,
   newChatId,
+  renameChat,
   titleFrom,
   upsertChat,
 } from '@/lib/chat-store';
