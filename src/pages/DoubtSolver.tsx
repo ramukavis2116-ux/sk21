@@ -10,6 +10,7 @@ import {
   getChat,
   loadChats,
   newChatId,
+  renameChat,
   titleFrom,
   upsertChat,
 } from '@/lib/chat-store';
@@ -25,6 +26,8 @@ import {
   MessageSquare,
   Menu,
   X,
+  Pencil,
+  Check,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -41,65 +44,127 @@ interface ChatListProps {
   activeChatId?: string;
   onSelect: (chatId: string) => void;
   onDelete: (chatId: string) => void;
+  onRename: (chatId: string, title: string) => void;
   onNewChat: () => void;
 }
 
-const ChatList = ({ chats, activeChatId, onSelect, onDelete, onNewChat }: ChatListProps) => (
-  <div className="flex flex-col h-full">
-    <Button onClick={onNewChat} className="gradient-primary text-primary-foreground mb-3 w-full shrink-0">
-      <Plus className="w-4 h-4 mr-2" /> New chat
-    </Button>
-    <ScrollArea className="flex-1 -mr-2 pr-2">
-      <div className="space-y-1">
-        {chats.length === 0 && (
-          <p className="text-xs text-muted-foreground px-2 py-4">No previous chats yet.</p>
-        )}
-        {chats.map(chat => {
-          const isActive = chat.chatId === activeChatId;
-          return (
-            <div
-              key={chat.chatId}
-              className={cn(
-                'group relative flex items-start gap-2 rounded-lg px-3 py-2.5 text-left transition-colors',
-                isActive
-                  ? 'bg-primary/10 hover:bg-primary/15'
-                  : 'hover:bg-muted/70'
-              )}
-            >
-              {isActive && (
-                <div className="absolute left-0 top-1/2 -translate-y-1/2 h-6 w-1 rounded-r-full bg-primary" />
-              )}
-              <button
-                type="button"
-                onClick={() => onSelect(chat.chatId)}
-                className="flex-1 min-w-0 text-left"
+const ChatList = ({ chats, activeChatId, onSelect, onDelete, onRename, onNewChat }: ChatListProps) => {
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editValue, setEditValue] = useState('');
+  const editInputRef = useRef<HTMLInputElement>(null);
+
+  const startRename = (chat: Chat) => {
+    setEditingId(chat.chatId);
+    setEditValue(chat.title);
+  };
+
+  const submitRename = () => {
+    if (editingId) {
+      onRename(editingId, editValue);
+      setEditingId(null);
+      setEditValue('');
+    }
+  };
+
+  const cancelRename = () => {
+    setEditingId(null);
+    setEditValue('');
+  };
+
+  useEffect(() => {
+    if (editingId) editInputRef.current?.focus();
+  }, [editingId]);
+
+  return (
+    <div className="flex flex-col h-full">
+      <Button onClick={onNewChat} className="gradient-primary text-primary-foreground mb-3 w-full shrink-0">
+        <Plus className="w-4 h-4 mr-2" /> New chat
+      </Button>
+      <ScrollArea className="flex-1 -mr-2 pr-2">
+        <div className="space-y-1">
+          {chats.length === 0 && (
+            <p className="text-xs text-muted-foreground px-2 py-4">No previous chats yet.</p>
+          )}
+          {chats.map(chat => {
+            const isActive = chat.chatId === activeChatId;
+            const isEditing = editingId === chat.chatId;
+            return (
+              <div
+                key={chat.chatId}
+                className={cn(
+                  'group relative flex items-start gap-2 rounded-lg px-3 py-2.5 text-left transition-colors',
+                  isActive && !isEditing
+                    ? 'bg-primary/10 hover:bg-primary/15'
+                    : 'hover:bg-muted/70'
+                )}
               >
-                <span className="flex items-center gap-2 text-sm font-medium truncate">
-                  <MessageSquare className={cn('w-3.5 h-3.5 shrink-0', isActive ? 'text-primary' : 'text-muted-foreground')} />
-                  <span className="truncate">{chat.title || 'New chat'}</span>
-                </span>
-                <span className={cn('block text-[11px] mt-0.5', isActive ? 'text-primary/80' : 'text-muted-foreground')}>
-                  {formatTime(chat.timestamp)}
-                </span>
-              </button>
-              <button
-                type="button"
-                aria-label="Delete chat"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onDelete(chat.chatId);
-                }}
-                className="opacity-0 group-hover:opacity-100 transition-opacity text-muted-foreground hover:text-destructive p-1 shrink-0"
-              >
-                <Trash2 className="w-3.5 h-3.5" />
-              </button>
-            </div>
-          );
-        })}
-      </div>
-    </ScrollArea>
-  </div>
-);
+                {isActive && !isEditing && (
+                  <div className="absolute left-0 top-1/2 -translate-y-1/2 h-6 w-1 rounded-r-full bg-primary" />
+                )}
+                <button
+                  type="button"
+                  onClick={() => onSelect(chat.chatId)}
+                  className="flex-1 min-w-0 text-left"
+                >
+                  <span className="flex items-center gap-2 text-sm font-medium truncate">
+                    <MessageSquare className={cn('w-3.5 h-3.5 shrink-0', isActive ? 'text-primary' : 'text-muted-foreground')} />
+                    {isEditing ? (
+                      <Input
+                        ref={editInputRef}
+                        value={editValue}
+                        onChange={e => setEditValue(e.target.value)}
+                        onKeyDown={e => {
+                          if (e.key === 'Enter') submitRename();
+                          if (e.key === 'Escape') cancelRename();
+                        }}
+                        onBlur={submitRename}
+                        onClick={e => e.stopPropagation()}
+                        className="h-6 py-0 px-1 text-sm"
+                      />
+                    ) : (
+                      <span className="truncate">{chat.title || 'New chat'}</span>
+                    )}
+                  </span>
+                  {!isEditing && (
+                    <span className={cn('block text-[11px] mt-0.5', isActive ? 'text-primary/80' : 'text-muted-foreground')}>
+                      {formatTime(chat.timestamp)}
+                    </span>
+                  )}
+                </button>
+                {!isEditing && (
+                  <div className="flex items-center shrink-0">
+                    <button
+                      type="button"
+                      aria-label="Rename chat"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        startRename(chat);
+                      }}
+                      className="opacity-0 group-hover:opacity-100 transition-opacity text-muted-foreground hover:text-primary p-1"
+                    >
+                      <Pencil className="w-3.5 h-3.5" />
+                    </button>
+                    <button
+                      type="button"
+                      aria-label="Delete chat"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onDelete(chat.chatId);
+                      }}
+                      className="opacity-0 group-hover:opacity-100 transition-opacity text-muted-foreground hover:text-destructive p-1"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      </ScrollArea>
+    </div>
+  );
+};
 
 const DoubtSolver = () => {
   const navigate = useNavigate();
@@ -181,6 +246,10 @@ const DoubtSolver = () => {
     setMobileSidebarOpen(false);
   };
 
+  const handleRename = (id: string, title: string) => {
+    setChats(renameChat(id, title));
+  };
+
   const sortedChats = useMemo(() => [...chats].sort((a, b) => b.timestamp - a.timestamp), [chats]);
 
   const chatList = (
@@ -189,6 +258,7 @@ const DoubtSolver = () => {
       activeChatId={chatId}
       onSelect={selectChat}
       onDelete={handleDelete}
+      onRename={handleRename}
       onNewChat={newChat}
     />
   );
