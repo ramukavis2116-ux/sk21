@@ -246,6 +246,10 @@ const DoubtSolver = () => {
     setMobileSidebarOpen(false);
   };
 
+  const handleRename = (id: string, title: string) => {
+    setChats(renameChat(id, title));
+  };
+
   const sortedChats = useMemo(() => [...chats].sort((a, b) => b.timestamp - a.timestamp), [chats]);
 
   const chatList = (
@@ -254,6 +258,7 @@ const DoubtSolver = () => {
       activeChatId={chatId}
       onSelect={selectChat}
       onDelete={handleDelete}
+      onRename={handleRename}
       onNewChat={newChat}
     />
   );
