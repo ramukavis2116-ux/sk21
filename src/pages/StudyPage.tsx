@@ -4,7 +4,7 @@ import { motion } from 'framer-motion';
 import ReactMarkdown from 'react-markdown';
 import { useAuth } from '@/lib/auth-context';
 import { generateNotes } from '@/lib/ai';
-import { Chat, ChatMessage, newChatId, upsertChat } from '@/lib/chat-store';
+import { Chat, ChatMessage, findChatByTitle, newChatId, upsertChat } from '@/lib/chat-store';
 import { BookOpen, ArrowLeft, Loader2, Sparkles } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
