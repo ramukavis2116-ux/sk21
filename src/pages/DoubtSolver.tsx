@@ -214,7 +214,7 @@ const DoubtSolver = () => {
 
     setLoading(true);
     try {
-      const answer = await solveDoubt(q);
+      const answer = await solveDoubt(q, undefined, base);
       const withAnswer: ChatMessage[] = [...withUser, { role: 'assistant', content: answer }];
       setMessages(withAnswer);
       persist(id, withAnswer);
