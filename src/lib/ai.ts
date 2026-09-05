@@ -92,7 +92,11 @@ export function getSubjectsForLevel(level: string, degree?: string, branch?: str
   if (level === "College" && degree && branch) {
     const branches = collegeCatalog[degree];
     if (!branches) return [];
-    return branches[branch] || branches[legacyBranchAliases[branch] || ""] || [];
+    if (branches[branch]) return branches[branch];
+    // Legacy short branch names only apply to engineering degrees.
+    const isEngineering = degree === "B.Tech" || degree === "B.E";
+    const aliased = isEngineering ? legacyBranchAliases[branch] : undefined;
+    return (aliased && branches[aliased]) || [];
   }
   if (level === "Competitive") {
     return competitiveCatalog[degree || ""] || [];
