@@ -87,66 +87,30 @@ Please provide:
 }
 
 export function getSubjectsForLevel(level: string, degree?: string, branch?: string): string[] {
-  const schoolSubjects: Record<string, string[]> = {
-    "Class 1-5": ["Mathematics", "English", "Science", "Social Studies", "Hindi"],
-    "Class 6-8": ["Mathematics", "English", "Science", "Social Studies", "Hindi", "Computer Science"],
-    "Class 9-10": ["Mathematics", "Physics", "Chemistry", "Biology", "English", "Social Science", "Hindi", "Computer Applications"],
-    "Class 11-12 Science": ["Physics", "Chemistry", "Mathematics", "Biology", "English", "Computer Science"],
-    "Class 11-12 Commerce": ["Accountancy", "Business Studies", "Economics", "Mathematics", "English"],
-    "Class 11-12 Arts": ["History", "Political Science", "Geography", "Economics", "English", "Psychology"],
-  };
-
-  const collegeSubjects: Record<string, Record<string, string[]>> = {
-    "B.Tech": {
-      "Computer Science": ["Data Structures", "Algorithms", "Database Management", "Operating Systems", "Computer Networks", "Software Engineering", "Machine Learning", "Web Development"],
-      "Electronics": ["Circuit Theory", "Digital Electronics", "Signals & Systems", "Microprocessors", "Communication Systems", "VLSI Design"],
-      "Mechanical": ["Thermodynamics", "Fluid Mechanics", "Machine Design", "Manufacturing", "Heat Transfer", "Dynamics of Machinery"],
-      "Civil": ["Structural Analysis", "Geotechnical Engineering", "Fluid Mechanics", "Surveying", "Construction Management", "Environmental Engineering"],
-    },
-    "B.Sc": {
-      "Physics": ["Classical Mechanics", "Quantum Mechanics", "Electrodynamics", "Thermodynamics", "Optics", "Nuclear Physics"],
-      "Chemistry": ["Organic Chemistry", "Inorganic Chemistry", "Physical Chemistry", "Analytical Chemistry", "Biochemistry"],
-      "Mathematics": ["Calculus", "Linear Algebra", "Real Analysis", "Abstract Algebra", "Differential Equations", "Probability & Statistics"],
-    },
-    "BCA": {
-      "General": ["Programming in C", "Data Structures", "DBMS", "Operating Systems", "Java", "Web Technologies", "Python", "Software Engineering"],
-    },
-  };
-
-  const competitiveSubjects: Record<string, string[]> = {
-    "JEE": ["Physics", "Chemistry", "Mathematics"],
-    "NEET": ["Physics", "Chemistry", "Biology (Botany)", "Biology (Zoology)"],
-    "UPSC": ["General Studies", "Indian Polity", "Geography", "History", "Economics", "Science & Tech", "Ethics"],
-    "CAT": ["Quantitative Aptitude", "Verbal Ability", "Data Interpretation", "Logical Reasoning"],
-    "GATE": ["Engineering Mathematics", "General Aptitude", "Core Subject"],
-  };
-
   if (level === "College" && degree && branch) {
-    return collegeSubjects[degree]?.[branch] || [];
+    const branches = collegeCatalog[degree];
+    if (!branches) return [];
+    return branches[branch] || branches[legacyBranchAliases[branch] || ""] || [];
   }
   if (level === "Competitive") {
-    return competitiveSubjects[degree || ""] || [];
+    return competitiveCatalog[degree || ""] || [];
   }
-  return schoolSubjects[level] || [];
+  return schoolCatalog[level] || [];
 }
 
 export function getLevels(): string[] {
-  return ["Class 1-5", "Class 6-8", "Class 9-10", "Class 11-12 Science", "Class 11-12 Commerce", "Class 11-12 Arts", "College", "Competitive"];
+  return [...Object.keys(schoolCatalog), "College", "Competitive"];
 }
 
 export function getDegrees(): string[] {
-  return ["B.Tech", "B.Sc", "BCA"];
+  return Object.keys(collegeCatalog);
 }
 
 export function getBranches(degree: string): string[] {
-  const branches: Record<string, string[]> = {
-    "B.Tech": ["Computer Science", "Electronics", "Mechanical", "Civil"],
-    "B.Sc": ["Physics", "Chemistry", "Mathematics"],
-    "BCA": ["General"],
-  };
-  return branches[degree] || [];
+  return Object.keys(collegeCatalog[degree] || {});
 }
 
 export function getCompetitiveExams(): string[] {
-  return ["JEE", "NEET", "UPSC", "CAT", "GATE"];
+  return Object.keys(competitiveCatalog);
 }
+
