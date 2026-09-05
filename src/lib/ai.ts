@@ -1,4 +1,6 @@
 import { supabase } from "@/integrations/supabase/client";
+import { collegeCatalog, competitiveCatalog, schoolCatalog, legacyBranchAliases } from "@/lib/education-catalog";
+
 
 async function callAI(messages: { role: string; content: string }[]): Promise<string> {
   const { data, error } = await supabase.functions.invoke('study-ai', {
