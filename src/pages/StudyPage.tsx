@@ -94,6 +94,14 @@ const StudyPage = () => {
       const next: ChatMessage[] = [...base, { role: 'assistant', content: result }];
       setMessages(next);
       persist(chatId, activeTopic, next);
+      if (includeImage) {
+        const image = await generateTopicImage(decodedSubject, q, user?.level || 'student');
+        if (image) {
+          setMessages(prev =>
+            prev.map((m, i) => (i === prev.length - 1 && m.role === 'assistant' ? { ...m, image } : m))
+          );
+        }
+      }
     } catch {
       setMessages([...base, { role: 'assistant', content: '⚠️ Failed to answer. Please try again.' }]);
     }
