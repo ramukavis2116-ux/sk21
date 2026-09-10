@@ -34,6 +34,22 @@ Please provide:
   ]);
 }
 
+export async function generateTopicImage(
+  subject: string,
+  topic: string,
+  level: string
+): Promise<string | null> {
+  try {
+    const { data, error } = await supabase.functions.invoke('study-image', {
+      body: { subject, topic, level },
+    });
+    if (error || !data || data.error || data.skipped) return null;
+    return typeof data.image === 'string' ? data.image : null;
+  } catch {
+    return null;
+  }
+}
+
 export async function solveDoubt(
   question: string,
   context?: string,
