@@ -3,12 +3,14 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import ReactMarkdown from 'react-markdown';
 import { useAuth } from '@/lib/auth-context';
-import { generateNotes, solveDoubt } from '@/lib/ai';
+import { generateNotes, generateTopicImage, solveDoubt } from '@/lib/ai';
 import { Chat, ChatMessage, findChatByTitle, newChatId, upsertChat } from '@/lib/chat-store';
 import { BookOpen, ArrowLeft, Loader2, Sparkles, Send, MessageSquarePlus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card } from '@/components/ui/card';
+import { Switch } from '@/components/ui/switch';
+import { Label } from '@/components/ui/label';
 
 const StudyPage = () => {
   const { subject } = useParams<{ subject: string }>();
@@ -20,6 +22,7 @@ const StudyPage = () => {
   const [activeTopic, setActiveTopic] = useState('');
   const [chatId, setChatId] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [includeImage, setIncludeImage] = useState(false);
   const bottomRef = useRef<HTMLDivElement>(null);
 
   const decodedSubject = decodeURIComponent(subject || '');
@@ -33,7 +36,7 @@ const StudyPage = () => {
     const chat: Chat = {
       chatId: id,
       title,
-      messages: msgs,
+      messages: msgs.map(({ role, content }) => ({ role, content })),
       timestamp: Date.now(),
     };
     upsertChat(existing && existing.chatId === id ? { ...existing, ...chat } : chat);
@@ -63,6 +66,14 @@ const StudyPage = () => {
       setMessages(next);
       persist(id, trimmedTopic, next);
       if (user) updateUser({ topicsCompleted: (user.topicsCompleted || 0) + 1 });
+      if (includeImage) {
+        const image = await generateTopicImage(decodedSubject, trimmedTopic, user?.level || 'student');
+        if (image) {
+          setMessages(prev =>
+            prev.map((m, i) => (i === prev.length - 1 && m.role === 'assistant' ? { ...m, image } : m))
+          );
+        }
+      }
     } catch {
       setMessages([...base, { role: 'assistant', content: '⚠️ Failed to generate notes. Please try again.' }]);
     }
@@ -135,6 +146,12 @@ const StudyPage = () => {
                   {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Generate'}
                 </Button>
               </div>
+              <div className="flex items-center gap-2 mt-4">
+                <Switch id="include-image" checked={includeImage} onCheckedChange={setIncludeImage} />
+                <Label htmlFor="include-image" className="text-sm text-muted-foreground cursor-pointer">
+                  Include Image
+                </Label>
+              </div>
             </Card>
           )}
 
@@ -156,6 +173,14 @@ const StudyPage = () => {
                 ) : (
                   <Card className="p-6 shadow-card prose prose-sm max-w-none [&>*]:mb-4 [&_li]:mb-2 [&_ol]:space-y-3 [&_ul]:space-y-3">
                     <ReactMarkdown>{m.content}</ReactMarkdown>
+                    {m.image && (
+                      <img
+                        src={m.image}
+                        alt="Educational illustration for the topic"
+                        loading="lazy"
+                        className="mt-2 w-full rounded-xl border border-border"
+                      />
+                    )}
                   </Card>
                 )}
               </motion.div>
