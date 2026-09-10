@@ -146,6 +146,12 @@ const StudyPage = () => {
                   {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Generate'}
                 </Button>
               </div>
+              <div className="flex items-center gap-2 mt-4">
+                <Switch id="include-image" checked={includeImage} onCheckedChange={setIncludeImage} />
+                <Label htmlFor="include-image" className="text-sm text-muted-foreground cursor-pointer">
+                  Include Image
+                </Label>
+              </div>
             </Card>
           )}
 
@@ -167,6 +173,14 @@ const StudyPage = () => {
                 ) : (
                   <Card className="p-6 shadow-card prose prose-sm max-w-none [&>*]:mb-4 [&_li]:mb-2 [&_ol]:space-y-3 [&_ul]:space-y-3">
                     <ReactMarkdown>{m.content}</ReactMarkdown>
+                    {m.image && (
+                      <img
+                        src={m.image}
+                        alt="Educational illustration for the topic"
+                        loading="lazy"
+                        className="mt-2 w-full rounded-xl border border-border"
+                      />
+                    )}
                   </Card>
                 )}
               </motion.div>
