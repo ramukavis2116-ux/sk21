@@ -3,12 +3,14 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import ReactMarkdown from 'react-markdown';
 import { useAuth } from '@/lib/auth-context';
-import { generateNotes, solveDoubt } from '@/lib/ai';
+import { generateNotes, generateTopicImage, solveDoubt } from '@/lib/ai';
 import { Chat, ChatMessage, findChatByTitle, newChatId, upsertChat } from '@/lib/chat-store';
 import { BookOpen, ArrowLeft, Loader2, Sparkles, Send, MessageSquarePlus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card } from '@/components/ui/card';
+import { Switch } from '@/components/ui/switch';
+import { Label } from '@/components/ui/label';
 
 const StudyPage = () => {
   const { subject } = useParams<{ subject: string }>();
@@ -20,6 +22,7 @@ const StudyPage = () => {
   const [activeTopic, setActiveTopic] = useState('');
   const [chatId, setChatId] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [includeImage, setIncludeImage] = useState(false);
   const bottomRef = useRef<HTMLDivElement>(null);
 
   const decodedSubject = decodeURIComponent(subject || '');
