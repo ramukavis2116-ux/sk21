@@ -209,6 +209,12 @@ const StudyPage = () => {
                   <Send className="w-4 h-4" />
                 </Button>
               </div>
+              <div className="flex items-center gap-2 mt-3">
+                <Switch id="include-image-followup" checked={includeImage} onCheckedChange={setIncludeImage} />
+                <Label htmlFor="include-image-followup" className="text-sm text-muted-foreground cursor-pointer">
+                  Include Image
+                </Label>
+              </div>
             </Card>
           )}
         </motion.div>
