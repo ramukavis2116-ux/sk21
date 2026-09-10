@@ -36,7 +36,7 @@ const StudyPage = () => {
     const chat: Chat = {
       chatId: id,
       title,
-      messages: msgs,
+      messages: msgs.map(({ role, content }) => ({ role, content })),
       timestamp: Date.now(),
     };
     upsertChat(existing && existing.chatId === id ? { ...existing, ...chat } : chat);
