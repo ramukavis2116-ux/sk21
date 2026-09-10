@@ -7,7 +7,19 @@ async function callAI(messages: { role: string; content: string }[]): Promise<st
     body: { messages },
   });
 
-  if (error) throw new Error(error.message || 'AI request failed');
+  if (error) {
+    // Read the real message from the function response (e.g. credit/rate limits).
+    const res = (error as { context?: Response }).context;
+    if (res && typeof res.json === 'function') {
+      try {
+        const body = await res.json();
+        if (body?.error) throw new Error(body.error);
+      } catch (e) {
+        if (e instanceof Error && e.message) throw e;
+      }
+    }
+    throw new Error(error.message || 'AI request failed');
+  }
   if (data?.error) throw new Error(data.error);
   return data.content;
 }
