@@ -103,8 +103,9 @@ const StudyPage = () => {
           );
         }
       }
-    } catch {
-      setMessages([...base, { role: 'assistant', content: '⚠️ Failed to answer. Please try again.' }]);
+    } catch (e) {
+      const msg = e instanceof Error && e.message ? e.message : 'Failed to answer. Please try again.';
+      setMessages([...base, { role: 'assistant', content: `⚠️ ${msg}` }]);
     }
     setLoading(false);
   };
