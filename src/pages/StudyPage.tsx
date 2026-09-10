@@ -74,8 +74,9 @@ const StudyPage = () => {
           );
         }
       }
-    } catch {
-      setMessages([...base, { role: 'assistant', content: '⚠️ Failed to generate notes. Please try again.' }]);
+    } catch (e) {
+      const msg = e instanceof Error && e.message ? e.message : 'Failed to generate notes. Please try again.';
+      setMessages([...base, { role: 'assistant', content: `⚠️ ${msg}` }]);
     }
     setLoading(false);
   };
