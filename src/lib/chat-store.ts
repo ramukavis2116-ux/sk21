@@ -1,6 +1,8 @@
 export interface ChatMessage {
   role: 'user' | 'assistant';
   content: string;
+  /** Optional data-URL image shown after the notes. Not persisted (size). */
+  image?: string;
 }
 
 export interface Chat {
