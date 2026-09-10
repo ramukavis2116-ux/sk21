@@ -66,6 +66,14 @@ const StudyPage = () => {
       setMessages(next);
       persist(id, trimmedTopic, next);
       if (user) updateUser({ topicsCompleted: (user.topicsCompleted || 0) + 1 });
+      if (includeImage) {
+        const image = await generateTopicImage(decodedSubject, trimmedTopic, user?.level || 'student');
+        if (image) {
+          setMessages(prev =>
+            prev.map((m, i) => (i === prev.length - 1 && m.role === 'assistant' ? { ...m, image } : m))
+          );
+        }
+      }
     } catch {
       setMessages([...base, { role: 'assistant', content: '⚠️ Failed to generate notes. Please try again.' }]);
     }
