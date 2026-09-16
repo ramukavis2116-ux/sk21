@@ -11,58 +11,60 @@ const json = (body: unknown, status = 200) =>
     headers: { ...corsHeaders, "Content-Type": "application/json" },
   });
 
+const TEXT_MODEL = "gemini-3.6-flash";
+// Ordered fallbacks; availability is verified at runtime against the key's model list.
+const IMAGE_MODELS = [
+  "gemini-3.1-flash-image",
+  "gemini-3-pro-image",
+  "gemini-2.5-flash-image",
+];
+
+const GEMINI = "https://generativelanguage.googleapis.com/v1beta";
+
 serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
   try {
     const { subject, topic, level } = await req.json();
-    const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
-    if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY is not configured");
+
+    // Server-side only secret. Never returned to the client.
+    const GEMINI_API_KEY = Deno.env.get("GEMINI_API_KEY") || Deno.env.get("GOOGLE_API_KEY");
+    if (!GEMINI_API_KEY) return json({ skipped: true, reason: "no-key" });
 
     if (!topic || typeof topic !== "string" || !topic.trim()) {
       return json({ skipped: true, reason: "no-topic" });
     }
 
-    // Step 1: decide whether a visual actually helps, and build the image prompt.
-    const decide = await fetch("https://ai.gateway.lovable.dev/v1/responses", {
+    // Step 1: decide whether a visual actually helps, and build the diagram prompt.
+    const decide = await fetch(`${GEMINI}/models/${TEXT_MODEL}:generateContent`, {
       method: "POST",
-      headers: {
-        Authorization: `Bearer ${LOVABLE_API_KEY}`,
-        "Content-Type": "application/json",
-      },
+      headers: { "Content-Type": "application/json", "x-goog-api-key": GEMINI_API_KEY },
       body: JSON.stringify({
-        model: "openai/gpt-6-astra",
-        reasoning: { effort: "low" },
-        input: [
-          {
-            role: "system",
-            content:
-              "You decide whether a single educational image would improve a student's understanding of a study topic. Reply with ONLY minified JSON: {\"useImage\":boolean,\"prompt\":string}. useImage must be false for greetings, small talk, non-academic input, nonsense, or purely theoretical/definitional topics with nothing to visualise. When true, prompt must describe ONE simple, clean, labelled educational diagram or concept visual for the topic (no text-heavy slides, no watermarks). Keep prompt under 60 words.",
-          },
-          {
-            role: "user",
-            content: `Subject: ${subject || "General"}\nTopic: ${topic}\nStudent level: ${level || "student"}`,
-          },
-        ],
+        systemInstruction: {
+          parts: [{
+            text:
+              "You decide whether a single educational diagram would improve a student's understanding of a study topic. Reply with ONLY minified JSON: {\"useImage\":boolean,\"prompt\":string}. useImage must be false for greetings, small talk, non-academic input, nonsense, or purely definitional topics with nothing to visualise. When true, prompt must request ONE simple, clean, clearly labelled educational diagram in textbook/classroom style — a flowchart, block diagram, architecture diagram, timeline, or concept diagram, whichever fits the topic. No artistic decoration, no watermarks, no text-heavy slides. Keep prompt under 60 words.",
+          }],
+        },
+        contents: [{
+          role: "user",
+          parts: [{ text: `Subject: ${subject || "General"}\nTopic: ${topic}\nStudent level: ${level || "student"}` }],
+        }],
+        generationConfig: { temperature: 0.4, maxOutputTokens: 300 },
       }),
     });
 
     if (!decide.ok) {
       const text = await decide.text();
       console.error("decision error:", decide.status, text);
-      if (decide.status === 429) return json({ error: "Rate limit exceeded. Please try again in a moment." }, 429);
-      if (decide.status === 402) return json({ error: "AI usage limit reached. Please add credits." }, 402);
       return json({ skipped: true, reason: "decision-failed" });
     }
 
     const decideData = await decide.json();
     const rawText: string =
-      decideData.output_text ??
-      decideData.output
-        ?.flatMap((o: { content?: { text?: string }[] }) => o.content ?? [])
-        ?.map((c: { text?: string }) => c.text ?? "")
-        .join("") ??
-      "";
+      decideData?.candidates?.[0]?.content?.parts
+        ?.map((p: { text?: string }) => p?.text || "")
+        .join("") || "";
 
     let useImage = false;
     let prompt = "";
@@ -76,40 +78,60 @@ serve(async (req) => {
 
     if (!useImage || !prompt) return json({ skipped: true, reason: "not-visual" });
 
-    // Step 2: generate one image.
-    const img = await fetch("https://ai.gateway.lovable.dev/v1/images/generations", {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${LOVABLE_API_KEY}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        model: "google/gemini-3-pro-image",
-        messages: [
-          {
-            role: "user",
-            content: `Simple, clear educational diagram for students. ${prompt}`,
-          },
-        ],
-        modalities: ["image", "text"],
-      }),
-    });
-
-    if (!img.ok) {
-      const text = await img.text();
-      console.error("image error:", img.status, text);
-      if (img.status === 429) return json({ error: "Rate limit exceeded. Please try again in a moment." }, 429);
-      if (img.status === 402) return json({ error: "AI usage limit reached. Please add credits." }, 402);
-      return json({ error: "Image service error" }, 500);
+    // Step 2: find an image model this key actually supports.
+    let available: string[] = [];
+    try {
+      const listRes = await fetch(`${GEMINI}/models?pageSize=200`, {
+        headers: { "x-goog-api-key": GEMINI_API_KEY },
+      });
+      if (listRes.ok) {
+        const list = await listRes.json();
+        available = (list?.models || [])
+          .map((m: { name?: string }) => (m.name || "").replace("models/", ""));
+      }
+    } catch (e) {
+      console.error("model list error:", e);
     }
 
-    const imgData = await img.json();
-    const b64 = imgData.data?.[0]?.b64_json;
-    if (!b64) return json({ skipped: true, reason: "no-image" });
+    const candidates = available.length
+      ? IMAGE_MODELS.filter((m) => available.includes(m))
+      : IMAGE_MODELS;
+    if (candidates.length === 0) return json({ skipped: true, reason: "no-image-model" });
 
-    return json({ image: `data:image/png;base64,${b64}`, caption: prompt });
+    // Step 3: generate one image.
+    const fullPrompt = `Simple, clean, clearly labelled educational diagram for students, textbook style, white background, no watermark. ${prompt}`;
+
+    for (const model of candidates) {
+      const img = await fetch(`${GEMINI}/models/${model}:generateContent`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "x-goog-api-key": GEMINI_API_KEY },
+        body: JSON.stringify({
+          contents: [{ role: "user", parts: [{ text: fullPrompt }] }],
+          generationConfig: { responseModalities: ["TEXT", "IMAGE"] },
+        }),
+      });
+
+      if (!img.ok) {
+        console.error("image error:", model, img.status, await img.text());
+        continue;
+      }
+
+      const imgData = await img.json();
+      const parts = imgData?.candidates?.[0]?.content?.parts || [];
+      const inline = parts.find(
+        (p: { inlineData?: { data?: string; mimeType?: string } }) => p?.inlineData?.data
+      )?.inlineData;
+      if (inline?.data) {
+        return json({
+          image: `data:${inline.mimeType || "image/png"};base64,${inline.data}`,
+          caption: prompt,
+        });
+      }
+    }
+
+    return json({ skipped: true, reason: "no-image" });
   } catch (e) {
     console.error("study-image error:", e);
-    return json({ error: e instanceof Error ? e.message : "Unknown error" }, 500);
+    return json({ skipped: true, reason: "error" });
   }
 });
