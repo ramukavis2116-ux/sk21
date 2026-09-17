@@ -42,6 +42,20 @@ const StudyPage = () => {
     upsertChat(existing && existing.chatId === id ? { ...existing, ...chat } : chat);
   };
 
+  /** Fetches videos in the background; never blocks or breaks notes. */
+  const attachVideos = (searchTopic: string) => {
+    const category = [user?.level, user?.degree, user?.branch].filter(Boolean).join(' ');
+    fetchTopicVideos(searchTopic, decodedSubject, category)
+      .then(videos => {
+        setMessages(prev => {
+          const lastIndex = prev.length - 1;
+          if (lastIndex < 0 || prev[lastIndex].role !== 'assistant') return prev;
+          return prev.map((m, i) => (i === lastIndex ? { ...m, videos } : m));
+        });
+      })
+      .catch(() => undefined);
+  };
+
   const handleGenerate = async () => {
     const trimmedTopic = topic.trim();
     if (!trimmedTopic || loading) return;
@@ -104,6 +118,7 @@ const StudyPage = () => {
           );
         }
       }
+      attachVideos(`${activeTopic} ${q}`.trim());
     } catch (e) {
       const msg = e instanceof Error && e.message ? e.message : 'Failed to answer. Please try again.';
       setMessages([...base, { role: 'assistant', content: `⚠️ ${msg}` }]);
@@ -191,6 +206,41 @@ const StudyPage = () => {
                         loading="lazy"
                         className="mt-2 w-full rounded-xl border border-border"
                       />
+                    )}
+                    {m.videos && (
+                      <div className="mt-6 not-prose">
+                        <h3 className="text-base font-bold font-display mb-3">Recommended Videos</h3>
+                        {m.videos.length === 0 ? (
+                          <p className="text-sm text-muted-foreground">
+                            No relevant videos found for this topic.
+                          </p>
+                        ) : (
+                          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                            {m.videos.map(v => (
+                              <a
+                                key={v.videoId}
+                                href={v.url}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="block rounded-xl border border-border overflow-hidden hover:border-primary transition-colors"
+                              >
+                                {v.thumbnail && (
+                                  <img
+                                    src={v.thumbnail}
+                                    alt={v.title}
+                                    loading="lazy"
+                                    className="w-full aspect-video object-cover"
+                                  />
+                                )}
+                                <div className="p-3">
+                                  <p className="text-sm font-semibold line-clamp-2">{v.title}</p>
+                                  <p className="text-xs text-muted-foreground mt-1">{v.channelName}</p>
+                                </div>
+                              </a>
+                            ))}
+                          </div>
+                        )}
+                      </div>
                     )}
                   </Card>
                 )}
