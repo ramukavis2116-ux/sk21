@@ -3,6 +3,14 @@ export interface ChatMessage {
   content: string;
   /** Optional data-URL image shown after the notes. Not persisted (size). */
   image?: string;
+  /** Optional recommended videos shown after the notes. Not persisted. */
+  videos?: {
+    videoId: string;
+    title: string;
+    thumbnail: string;
+    channelName: string;
+    url: string;
+  }[];
 }
 
 export interface Chat {
