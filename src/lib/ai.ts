@@ -62,6 +62,30 @@ export async function generateTopicImage(
   }
 }
 
+export interface VideoSuggestion {
+  videoId: string;
+  title: string;
+  thumbnail: string;
+  channelName: string;
+  url: string;
+}
+
+export async function fetchTopicVideos(
+  topic: string,
+  subject?: string,
+  category?: string
+): Promise<VideoSuggestion[]> {
+  try {
+    const { data, error } = await supabase.functions.invoke('youtube-search', {
+      body: { topic, subject, category },
+    });
+    if (error || !data || !Array.isArray(data.videos)) return [];
+    return data.videos as VideoSuggestion[];
+  } catch {
+    return [];
+  }
+}
+
 export async function solveDoubt(
   question: string,
   context?: string,
