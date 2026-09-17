@@ -3,7 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import ReactMarkdown from 'react-markdown';
 import { useAuth } from '@/lib/auth-context';
-import { generateNotes, generateTopicImage, solveDoubt } from '@/lib/ai';
+import { generateNotes, generateTopicImage, solveDoubt, fetchTopicVideos, VideoSuggestion } from '@/lib/ai';
 import { Chat, ChatMessage, findChatByTitle, newChatId, upsertChat } from '@/lib/chat-store';
 import { BookOpen, ArrowLeft, Loader2, Sparkles, Send, MessageSquarePlus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
