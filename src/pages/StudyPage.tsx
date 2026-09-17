@@ -74,6 +74,7 @@ const StudyPage = () => {
           );
         }
       }
+      attachVideos(trimmedTopic);
     } catch (e) {
       const msg = e instanceof Error && e.message ? e.message : 'Failed to generate notes. Please try again.';
       setMessages([...base, { role: 'assistant', content: `⚠️ ${msg}` }]);
